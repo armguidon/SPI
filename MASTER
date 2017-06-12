@@ -256,9 +256,14 @@ FSM : process (EP1,CLK,SS_n,j)
     begin
 
         case EP is
-
+	 when INIT 
+	 
+	  if (debut = '1') then
+	  EF <= new_rqt;
+	  else 
+	  EF <= INIT;
+	  
             when new_Rqt =>
-                if (debut = '1') then
                     EF <= transfert1;
                 else
                     EP <= new_Rqt;
@@ -296,18 +301,24 @@ FSM : process (EP1,CLK,SS_n,j)
     begin
 
         case EP is
+	when INIT =>
+	DIN_VLD <= '0';
+	CS_N <= IDLE1;
+	update_SS_n <= '0';
 
             when new_Rqt =>
                 DIN_VLD <= '1';
-				CS_N <= IDLE1;
-				
-
+		CS_N <= IDLE1;
+		update_SS_n <= '0';
             when transfert1 =>
-                CS_N <= IDLE1  ;
+                CS_N <= IDLE1;
+		DIN_VLD <= '1';
+		update_SS_n <= '0';
             when transfert2 =>
                 CS_N <= SS_n;
 
             when update_N_Slave =>
+	    CS_N <= IDLE1;
                 update_SS_n <='1';	
                 tmp := conv_integer(j);				
 	        data (tmp) <= spi_shreg;
@@ -458,7 +469,7 @@ FSM : process (EP1,CLK,SS_n,j)
                     next_state <= deactive_cs;
                 end if;
 
-            when others =>
+            when oth ers =>
                 next_state <= idle;
 
         end case;
