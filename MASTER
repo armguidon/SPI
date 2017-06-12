@@ -27,16 +27,19 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
+--use IEEE.NUMERIC_STD.ALL;
 use IEEE.MATH_REAL.ALL;
+USE IEEE.std_logic_unsigned.ALL;
+use IEEE.std_logic_arith.all;
+
 
 -- THE SPI MASTER MODULE SUPPORT ONLY SPI MODE 0 (CPOL=0, CPHA=0)!!!
 
 entity SPI_MASTER is
     Generic (
-        CLK_FREQ    : natural := 100e6; -- set system clock frequency in Hz
-        SCLK_FREQ   : natural := 10e6;  -- set SPI clock frequency in Hz (condition: SCLK_FREQ <= CLK_FREQ/10)
-        SLAVE_COUNT : natural := 1     -- count of SPI slaves  -- 8
+        CLK_FREQ    : natural := 50e6; -- set system clock frequency in Hz
+        SCLK_FREQ   : natural := 5e6;  -- set SPI clock frequency in Hz (condition: SCLK_FREQ <= CLK_FREQ/10)
+        SLAVE_COUNT : natural := 3     -- count of SPI slaves  -- 8
     );
     Port (
         CLK      : in  std_logic; -- system clock
@@ -48,17 +51,17 @@ entity SPI_MASTER is
         MISO     : in  std_logic;
         -- USER INTERFACE
         --ADDR     : in  std_logic_vector(integer(ceil(log2(real(SLAVE_COUNT))))-1 downto 0); -- slave address
-        READY    : out std_logic; -- when READY = 1, SPI master is ready to accept input data
-        DIN      : in  std_logic_vector(7 downto 0); -- input data for slave
-    --    DIN_VLD  : in  std_logic; -- when DIN_VLD = 1, input data are valid and can be accept
-        DOUT     : out std_logic_vector(7 downto 0); -- output data from slave
-        DOUT_VLD : out std_logic;  -- when DOUT_VLD = 1, output data are valid
+        READY    : out std_logic;                                            -- when READY = 1, SPI master is ready to accept input data
+        DIN      : in  std_logic_vector(7 downto 0);                         -- input data for slave
+    --    DIN_VLD  : in  std_logic;                                          -- when DIN_VLD = 1, input data are valid and can be accept
+        DOUT     : out std_logic_vector(7 downto 0);                         -- output data from slave
+        DOUT_VLD : out std_logic;                                            -- when DOUT_VLD = 1, output data are valid
         --
         -- signaux pour xdc
         
           LED        : out std_logic_vector (7 downto 0);
           RESET      : out std_logic;     
-          MISO1    : out std_logic
+          MISO1      : out std_logic
       
         
     );
@@ -85,23 +88,31 @@ architecture RTL of SPI_MASTER is
     signal master_transmit      : std_logic;
     signal master_transmit_end  : std_logic;
     signal master_ready         : std_logic;
-    ------------------------------------------------------- ---azeggagh
-    signal RST1                 : std_logic;
-    signal mis                  : std_logic;                ---azeggagh
-	signal DIN_VLD              : std_logic;                ---azeggagh                  -- when DIN_VLD = 1, input data are valid and can be accept
+    
+    
+    -------------------------------------------------------     --azeggagh
+        signal RST1                 : std_logic;
+        signal mis                  : std_logic;                --azeggagh
+	signal DIN_VLD              : std_logic;                --azeggagh                  
 	signal debut                : std_logic;
-	signal IDLE                 : std_logic_vector(SLAVE_COUNT-1 downto 0) :='1';
-	signal SS_n                 :std_logic_vector(SLAVE_COUNT-1 downto 0);
+	signal IDLE1                : std_logic_vector(SLAVE_COUNT-1 downto 0) :="111";
+	signal SS_n                 : std_logic_vector(SLAVE_COUNT-1 downto 0):="110";
 	signal update_SS_n          : std_logic;
+        signal j                    : std_logic_vector( 7 downto 0);
     
-    type state is (New_Rqt,transfert1,transfert2, update_N_Slave);
-    type state is (idle, sync, active_cs, transmit, transmit_end, deactive_cs);
-    signal present_state, next_state,EP,EF : state;
     
-    type donnees is array(SLAVE_COUNT-1 to 0) of std_logic_vector(7 downto 0);
+    type state is (idle, sync, active_cs, transmit, transmit_end, deactive_cs,New_Rqt,transfert1,transfert2, update_N_Slave,E0,E1);
+    signal present_state, next_state,EP,EF,EP1,EF1 : state;
+    
+    type donnees is array(SLAVE_COUNT-1 to 0) of std_logic_vector(8 downto 0);
 	signal Data : donnees;
+	
+	   
 
 begin
+ 
+      
+	
 
     ASSERT (DIVIDER_VALUE >= 10) REPORT "condition: SCLK_FREQ <= CLK_FREQ/10" SEVERITY ERROR;
 
@@ -172,23 +183,65 @@ begin
 	----------------------------------------------------------------------
 	--                    shift register       -- AZEGG
 	----------------------------------------------------------------------
-	for i in 0 to SLAVE_COUNT-1 generate
+	
+
 	shifter : process(CLK)
+	VARIABLE i : integer := 0;
 	begin
-	if (rising_edge (CLK) and update_SS_n ='1') then 
-	   if (i = '0') then
+	for i in 0 to (SLAVE_COUNT-1) loop
+	 if (rising_edge (CLK) and update_SS_n ='1') then 
+	   if (i = 0) then
 	SS_n (i) <= SS_n(SLAVE_COUNT-1);
 	else
 	SS_n (i) <= SS_n(i-1);
-	end if;
-	end if;
+	    end if;
+	  end if;
+	end loop;
 	end process;
+
+       -----------------------------------------------------------------------
+       --                      MAE selected slave
+       -----------------------------------------------------------------------
+	 Machine_a_etat : process (CLK)
 	
-	
+    begin
+        if (rising_edge(CLK)) then
+            if (RST = '1') then
+                EP1 <= E0;
+            else
+                EP1 <= EF1;
+            end if;
+        end if;
+    end process;
+
+FSM : process (EP1,CLK,SS_n,j)
+
+ VARIABLE i : integer := 0;
+   
+    begin
+
+        case EP1 is
+
+            when E0 =>
+                if (SS_n(i) = '0') then
+                    EF1 <= E1;
+                else
+                    EP1 <= E0;
+                end if;
+            i := i+1;
+
+            when E1 =>
+                
+               j<= conv_std_logic_vector(i,8);
+                    EF1 <= E0;
+            end case;
+         end process;
+
+
 	----------------------------------------------------------------------
 	--                      MAE                -- AZEGG
 	----------------------------------------------------------------------
-	 Machine_a_etat : process (CLK)
+	 Machine_a_etat1 : process (CLK)
     begin
         if (rising_edge(CLK)) then
             if (RST = '1') then
@@ -199,7 +252,7 @@ begin
         end if;
     end process;
 	
-	FSM : process (EP,debut,CLK,master_ready,spi_clk_fedge_en)
+	FSM1 : process (EP,debut,CLK,master_ready,spi_clk_fedge_en)
     begin
 
         case EP is
@@ -235,26 +288,29 @@ begin
         end case;       
     end process;
 	
-	sorties  : process (EP)
+	sorties  : process (EP,j)
+    VARIABLE tmp : integer := 0;
+  --   function conv_integer(arg: integer) 
+     --     return integer;
+      
     begin
 
         case EP is
 
             when new_Rqt =>
                 DIN_VLD <= '1';
-				CS_N <= IDLE;
+				CS_N <= IDLE1;
 				
 
             when transfert1 =>
-                CS_N <= IDLE  ;
+                CS_N <= IDLE1  ;
             when transfert2 =>
                 CS_N <= SS_n;
 
             when update_N_Slave =>
-                update_SS_n <='1';
-				
-				
-	           data
+                update_SS_n <='1';	
+                tmp := conv_integer(j);				
+	        data (tmp) <= spi_shreg;
          end case;
       end process;
 
@@ -462,16 +518,12 @@ begin
 -- affectation des leds 
 -------------------------------------------------------------------------
 
-      LED(0) <=  spi_shreg(0);
-      LED(1) <=  spi_shreg(1);
-      LED(2) <=  spi_shreg(2);
-      LED(3) <=  spi_shreg(3);
-      LED(4) <=  spi_shreg(4);
-      LED(5) <=  spi_shreg(5);
-      LED(6) <=  spi_shreg(6);
-      LED(7) <=  spi_shreg(7);
+      LED <=  spi_shreg;
+      
       
       RESET <= RST1;
+
+  
       MISO1 <= mis;
     
 end RTL;
