@@ -46,7 +46,7 @@ architecture SIM of SPI_TB is
     signal miso       : std_logic;
     signal mosi       : std_logic;
 
-    signal m_addr     : std_logic_vector(integer(ceil(log2(real(SLAVE_COUNT))))-1 downto 0);
+   -- signal m_addr     : std_logic_vector(integer(ceil(log2(real(SLAVE_COUNT))))-1 downto 0);
     signal m_din      : std_logic_vector(7 downto 0);
     signal m_din_vld  : std_logic;
     signal m_ready    : std_logic;
@@ -157,6 +157,8 @@ begin
         CLK <= '0';
         wait for CLK_PERIOD/2;
     end process;
+    
+    
 
     rst_process : process
     begin
@@ -166,9 +168,10 @@ begin
         wait;
     end process;
 
+
     master_test_process : process
     begin
-        m_addr <= (others => '0');
+      --  m_addr <= (others => '0');
         m_din <= (others => 'Z');
         m_din_vld <= '0';
 
@@ -187,43 +190,62 @@ begin
         wait for 190 ns;
         wait until rising_edge(CLK);
 
-        m_din <= X"F4";
-        m_din_vld <= '1';
-        wait until m_ready = '0';
+       -- m_din <= X"F4";
+       -- m_din_vld <= '1';
+       -- wait until m_ready = '0';
 
-        m_din <= X"47";
-        m_din_vld <= '1';
-        wait until m_ready = '0';
+       -- m_din <= X"47";
+       -- m_din_vld <= '1';
+       -- wait until m_ready = '0';
 
-        m_din <= (others => '0');
-        m_din_vld <= '0';
+       -- m_din <= (others => '0');
+       -- m_din_vld <= '0';
 
         wait;
     end process;
 
     slave_test_process : process
     begin
-        s_din <= (others => 'Z');
-        s_din_vld <= '0';
+        s0_din <= (others => 'Z');
+        s0_din_vld <= '0';
 
         wait until RST = '0';
         wait until rising_edge(CLK);
 
-        s_din <= X"A1";
-        s_din_vld <= '1';
+        s0_din <= X"A1";
+        s0_din_vld <= '1';
         wait until m_ready = '0';
+        
+        s0_din <= (others => 'Z');
+        s0_din_vld <= '0';
+      ---------------------------------
+        s1_din <= (others => 'Z');
+        s1_din_vld <= '0';
 
-        s_din <= X"B2";
-        s_din_vld <= '1';
+        wait until RST = '0';
+        wait until rising_edge(CLK);
+
+        s1_din <= X"A1";
+        s1_din_vld <= '1';
         wait until m_ready = '0';
+        
+        s1_din <= (others => 'Z');
+        s1_din_vld <= '0';
+        
+      -----------------------------------
+        s2_din <= (others => 'Z');
+        s2_din_vld <= '0';
 
-        s_din <= X"E8";
-        s_din_vld <= '1';
+        wait until RST = '0';
+        wait until rising_edge(CLK);
+
+        s2_din <= X"A1";
+        s2_din_vld <= '1';
         wait until m_ready = '0';
-
-        s_din <= (others => '0');
-        s_din_vld <= '0';
-
+        
+        s2_din <= (others => 'Z');
+        s2_din_vld <= '0';
+      
         wait;
     end process;
 
