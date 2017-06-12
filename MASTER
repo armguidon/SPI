@@ -270,7 +270,8 @@ FSM : process (EP1,CLK,SS_n,j)
                 end if;
 
             when transfert1 =>
-                if (spi_clk_fedge_en = '1') then
+                if (spi_clk_fedge_en = '1'
+		) then
                     EF <= transfert2;
 					
                 elsif (master_ready ='1') then
