@@ -169,8 +169,7 @@ begin
     end process;
 
 
-    master_test_process : process
-    begin
+   
       --  m_addr <= (others => '0');
         m_din <= (others => 'Z');
         m_din_vld <= '0';
@@ -180,11 +179,11 @@ begin
         wait until rising_edge(CLK);
 
         m_din <= X"12";
-        m_din_vld <= '1';
+        debut <= '1';
         wait until m_ready = '0';
 
         m_din <= (others => '0');
-        m_din_vld <= '0';
+        debut <= '0';
 
         wait until m_ready = '1';
         wait for 190 ns;
@@ -201,8 +200,7 @@ begin
        -- m_din <= (others => '0');
        -- m_din_vld <= '0';
 
-        wait;
-    end process;
+     
 
     slave_test_process : process
     begin
