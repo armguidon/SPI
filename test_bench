@@ -36,7 +36,7 @@ end SPI_TB;
 architecture SIM of SPI_TB is
 
     constant CLK_PERIOD  : time := 20 ns;
-    constant SLAVE_COUNT : integer := 4;
+    constant SLAVE_COUNT : integer := 3;
 
     signal CLK        : std_logic := '0';
     signal RST        : std_logic := '1';
@@ -52,13 +52,27 @@ architecture SIM of SPI_TB is
     signal m_ready    : std_logic;
     signal m_dout     : std_logic_vector(7 downto 0);
     signal m_dout_vld : std_logic;
-
-    signal s_din      : std_logic_vector(7 downto 0);
-    signal s_din_vld  : std_logic;
-    signal s_ready    : std_logic;
-    signal s_dout     : std_logic_vector(7 downto 0);
-    signal s_dout_vld : std_logic;
-
+------------------------------------------------------------------------ Slave0 --------------------------
+    signal s0_din      : std_logic_vector(7 downto 0);
+    signal s0_din_vld  : std_logic;
+    signal s0_ready    : std_logic;
+    signal s0_dout     : std_logic_vector(7 downto 0);
+    signal s0_dout_vld : std_logic;
+-----------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------ Slave1 --------------------------
+    signal s1_din      : std_logic_vector(7 downto 0);
+    signal s1_din_vld  : std_logic;
+    signal s1_ready    : std_logic;
+    signal s1_dout     : std_logic_vector(7 downto 0);
+    signal s1_dout_vld : std_logic;
+-----------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------ Slave2 --------------------------
+    signal s2_din      : std_logic_vector(7 downto 0);
+    signal s2_din_vld  : std_logic;
+    signal s2_ready    : std_logic;
+    signal s2_dout     : std_logic_vector(7 downto 0);
+    signal s2_dout_vld : std_logic;
+-----------------------------------------------------------------------------------------------------------
 begin
 
     master_i : entity work.SPI_MASTER
@@ -76,15 +90,15 @@ begin
         MOSI     => mosi,
         MISO     => miso,
         -- USER INTERFACE
-        ADDR     => m_addr,
-        READY    => m_ready,
+        --  ADDR     => m_addr,
+        --  READY    => m_ready,
         DIN      => m_din,
         DIN_VLD  => m_din_vld,
-        DOUT     => m_dout,
-        DOUT_VLD => m_dout_vld
+        --  DOUT     => m_dout,
+        --  DOUT_VLD => m_dout_vld
     );
-
-    slave_i : entity work.SPI_SLAVE
+------------------------------------------------------SLAVE 0 --------------------------------------
+    slave_0 : entity work.SPI_SLAVE
     port map (
         CLK      => CLK,
         RST      => RST,
@@ -94,13 +108,48 @@ begin
         MOSI     => mosi,
         MISO     => miso,
         -- USER INTERFACE
-        READY    => s_ready,
-        DIN      => s_din,
-        DIN_VLD  => s_din_vld,
-        DOUT     => s_dout,
-        DOUT_VLD => s_dout_vld
+        READY    => s0_ready,
+        DIN      => s0_din,
+        DIN_VLD  => s0_din_vld,
+        DOUT     => s0_dout,
+        DOUT_VLD => s0_dout_vld
     );
-
+-----------------------------------------------------SLAVE1 -------------------------------------------
+ slave_1 : entity work.SPI_SLAVE
+    port map (
+        CLK      => CLK,
+        RST      => RST,
+        -- SPI MASTER INTERFACE
+        SCLK     => sclk,
+        CS_N     => cs_n(1),
+        MOSI     => mosi,
+        MISO     => miso,
+        -- USER INTERFACE
+        READY    => s1_ready,
+        DIN      => s1_din,
+        DIN_VLD  => s1_din_vld,
+        DOUT     => s1_dout,
+        DOUT_VLD => s1_dout_vld
+    );
+-------------------------------------------------------------------------------------------------------
+-----------------------------------------------------SLAVE2 -------------------------------------------
+ slave_2 : entity work.SPI_SLAVE
+    port map (
+        CLK      => CLK,
+        RST      => RST,
+        -- SPI MASTER INTERFACE
+        SCLK     => sclk,
+        CS_N     => cs_n(2),
+        MOSI     => mosi,
+        MISO     => miso,
+        -- USER INTERFACE
+        READY    => s2_ready,
+        DIN      => s2_din,
+        DIN_VLD  => s2_din_vld,
+        DOUT     => s2_dout,
+        DOUT_VLD => s2_dout_vld
+    );
+-------------------------------------------------------------------------------------------------------
     clk_process : process
     begin
         CLK <= '1';
