@@ -124,6 +124,8 @@ begin
                 MISO <= DIN(7);
             elsif (spi_clk_fedge_en = '1' and CS_N = '0') then
                 MISO <= data_shreg(7);
+            elsif CS_N ='1' then
+                MISO <= 'Z';
             end if;
         end if;
     end process;
