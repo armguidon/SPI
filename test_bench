@@ -202,7 +202,7 @@ process
         wait until rising_edge(CLK);
         
         m_din <= X"47";
-        debut <= '0';
+        debut <= '1';
         wait until m_ready = '0';
         m_din <= (others => '0');
         debut <= '0';
