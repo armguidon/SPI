@@ -173,7 +173,7 @@ process
    
       --  m_addr <= (others => '0');
         m_din <= (others => 'Z');
-        m_din_vld <= '0';
+        debut <= '0';
 
         wait until RST = '0';
         wait for 30 ns;
@@ -182,24 +182,30 @@ process
         m_din <= X"12";
         debut <= '1';
         wait until m_ready = '0';
-
         m_din <= (others => '0');
         debut <= '0';
+        
 
         wait until m_ready = '1';
         wait for 190 ns;
         wait until rising_edge(CLK);
+        
 
         m_din <= X"F4";
         debut <= '1';
         wait until m_ready = '0';
-
-        m_din <= X"47";
-        debut <= '1';
-        wait until m_ready = '0';
-
         m_din <= (others => '0');
-        m_din_vld <= '0';
+        debut <= '0';
+        
+        wait until m_ready = '1';
+        wait for 380 ns;
+        wait until rising_edge(CLK);
+        
+        m_din <= X"47";
+        debut <= '0';
+        wait until m_ready = '0';
+        m_din <= (others => '0');
+        debut <= '0';
 
     end process; 
 
@@ -218,6 +224,12 @@ process
         s0_din <= (others => 'Z');
         s0_din_vld <= '0';
       ---------------------------------
+      -- clause wait
+      
+         wait for 190 ns;
+         wait until m_ready='0';
+         
+      ---------------------------------
         s1_din <= (others => 'Z');
         s1_din_vld <= '0';
 
@@ -230,7 +242,12 @@ process
         
         s1_din <= (others => 'Z');
         s1_din_vld <= '0';
-        
+        ---------------------------------
+      -- clause wait
+      
+         wait for 380 ns;
+         wait until m_ready='0';
+
       -----------------------------------
         s2_din <= (others => 'Z');
         s2_din_vld <= '0';
